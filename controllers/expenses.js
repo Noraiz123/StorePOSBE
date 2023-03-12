@@ -27,6 +27,10 @@ export const getExpenses = async (req, res) => {
       filters.store = user.store;
     }
 
+    if (query?.type) {
+      filters.type = query.type;
+    }
+
     if (query?.store !== '' && user.role === 'superAdmin') {
       filters.store = mongoose.Types.ObjectId(query.store);
     }

@@ -14,7 +14,8 @@ export const getCashFlows = async (req, res) => {
     let cashflow;
     let filters = {};
     let total;
-    let totalCashflow;
+    let totalPayable;
+    let totalReceivable;
 
     if (query.customer !== '') {
       filters.customer = mongoose.Types.ObjectId(query.customer);
@@ -58,8 +59,14 @@ export const getCashFlows = async (req, res) => {
     }
 
     if (total && total > 0) {
-      totalCashflow = await Cashflow.aggregate([
-        { $match: filters },
+      totalPayable = await Cashflow.aggregate([
+        { $match: { ...filters, type: 'Payable' } },
+        {
+          $group: { _id: null, total: { $sum: '$total' } },
+        },
+      ]);
+      totalReceivable = await Cashflow.aggregate([
+        { $match: { ...filters, type: 'Receivable' } },
         {
           $group: { _id: null, total: { $sum: '$total' } },
         },
@@ -108,7 +115,8 @@ export const getCashFlows = async (req, res) => {
       currentPage: page,
       totalPages: Math.ceil(total / perPage),
       noOfCashflow: total,
-      totalCashflow: totalCashflow?.[0]?.total || 0,
+      totalPayable: totalPayable?.[0]?.total || 0,
+      totalReceivable: totalReceivable?.[0]?.total || 0,
       cashflowStats: chartStats,
     });
   } catch (error) {
@@ -133,6 +141,11 @@ export const findCustomerPayable = async (req, res) => {
 export const createCashflow = async (req, res) => {
   const cashflow = req.body;
   let newCashflow;
+
+  if (!cashflow.vendor || !cashflow.customer)
+    return res.status(402).json({
+      message: 'Vendor / Customer is required',
+    });
 
   const user = await UsersModal.findOne({ _id: req.userId });
   const oldCashflow = await Cashflow.findOne({ customer: cashflow.customer, type: 'Payable' });

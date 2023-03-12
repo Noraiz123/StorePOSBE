@@ -11,6 +11,7 @@ import productsStatsRoutes from './routes/productsStats.js';
 import vendorsRoutes from './routes/vendors.js';
 import expenseRoutes from './routes/expenses.js';
 import cashflowRoutes from './routes/cashflow.js';
+import digitalSalesRoutes from './routes/digitalSales.js';
 
 const app = express();
 
@@ -27,6 +28,7 @@ app.use('/productsStats', productsStatsRoutes);
 app.use('/vendors', vendorsRoutes);
 app.use('/expenses', expenseRoutes);
 app.use('/cashflow', cashflowRoutes);
+app.use('/digitalSales', digitalSalesRoutes);
 
 const CONNECTION_URL =
   'mongodb+srv://noraiz:developer123@cluster0.kruef.mongodb.net/myFirstDatabase?retryWrites=true&w=majority';

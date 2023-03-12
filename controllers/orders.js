@@ -1,14 +1,11 @@
-// import express from 'express';
-// import mongoose from 'mongoose';
 import mongoose from 'mongoose';
 import OrdersModal from '../models/orders.js';
 import ProductsModal from '../models/products.js';
-import store from '../models/store.js';
 import UsersModal from '../models/users.js';
 import ProductsStatsModal from '../models/productsStats.js';
-import moment from 'moment';
 import CustomerModal from '../models/customers.js';
-import e from 'express';
+import expenses from '../models/expenses.js';
+import digitalSales from '../models/digitalSales.js';
 
 const decreaseQuantity = (products) => {
   let bulkOptions = products.orderItems.map((item) => {
@@ -52,6 +49,8 @@ export const getOrders = async (req, res) => {
     let total;
     let totalSales;
     let totalRetailPrice;
+    let totalExpenses;
+    let totalDigitalSales;
 
     const query = JSON.parse(req.query.query);
 
@@ -121,11 +120,33 @@ export const getOrders = async (req, res) => {
       totalFilters.cashier = mongoose.Types.ObjectId(filters.cashier);
     }
 
+    totalDigitalSales = await digitalSales.aggregate([
+      { $match: { ...(filters?.createdAt && { createdAt: filters.createdAt }), store: filters.store } },
+      {
+        $group: { _id: null, total: { $sum: '$amount' } },
+      },
+    ]);
+
     if (total && total > 0) {
       totalSales = await OrdersModal.aggregate([
         { $match: totalFilters },
         {
           $group: { _id: null, total: { $sum: '$total' } },
+        },
+      ]);
+
+      let expenseFilters = {};
+      if (filters?.createdAt) {
+        expenseFilters.createdAt = filters.createdAt;
+      }
+      expenseFilters.type = { $ne: 'accrued' };
+      if (filters?.store) {
+        expenseFilters.store = filters.store;
+      }
+      totalExpenses = await expenses.aggregate([
+        { $match: expenseFilters },
+        {
+          $group: { _id: null, total: { $sum: '$amount' } },
         },
       ]);
       totalRetailPrice = await OrdersModal.aggregate([
@@ -171,19 +192,25 @@ export const getOrders = async (req, res) => {
       },
     ]);
 
+    const totalProfit =
+      totalSales && totalRetailPrice && totalSales.length > 0 && totalRetailPrice.length > 0
+        ? totalSales[0]?.total - totalRetailPrice[0]?.total
+        : 0;
+
+    const profitWithExpense = totalExpenses?.[0]?.total ? totalProfit - totalExpenses?.[0]?.total : totalProfit;
+
     res.status(200).json({
       orders: ordersModals,
       currentPage: page,
       totalPages: Math.ceil(total / perPage),
       totalTransactions: total,
       totalSales: totalSales?.[0]?.total || 0,
-      totalProfit:
-        totalSales && totalRetailPrice && totalSales.length > 0 && totalRetailPrice.length > 0
-          ? totalSales[0]?.total - totalRetailPrice[0]?.total
-          : 0,
+      totalProfit: profitWithExpense,
+      totalDigitalSales: totalDigitalSales?.[0]?.total || 0,
       chartStats: chartStats,
     });
   } catch (error) {
+    console.log(error);
     res.status(404).json({ message: error.message });
   }
 };
