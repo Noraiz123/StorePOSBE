@@ -17,7 +17,7 @@ const userSchema = mongoose.Schema(
     },
     unit: { type: String },
     category: { type: mongoose.Schema.Types.ObjectId, ref: 'Categories' },
-    vendor: { type: mongoose.Schema.Types.ObjectId, ref: 'Vendors' },
+    vendor: { type: mongoose.Schema.Types.ObjectId, ref: 'Vendor' },
     discount: { type: Number, default: 0, max: 100 },
     quantity: { type: Number, default: 1 },
     bagQuantity: { type: Number, default: 0 },

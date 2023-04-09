@@ -47,7 +47,8 @@ export const getCashFlows = async (req, res) => {
         .limit(perPage)
         .skip(startIndex)
         .sort({ createdAt: -1 })
-        .populate('customer');
+        .populate('customer')
+        .populate('vendor');
     } else {
       total = await Cashflow.countDocuments({ store: user.store });
       cashflow = await Cashflow.find({ store: user.store })
@@ -55,7 +56,8 @@ export const getCashFlows = async (req, res) => {
         .limit(perPage)
         .skip(startIndex)
         .sort({ createdAt: -1 })
-        .populate('customer');
+        .populate('customer')
+        .populate('vendor');
     }
 
     if (total && total > 0) {
@@ -142,13 +144,35 @@ export const createCashflow = async (req, res) => {
   const cashflow = req.body;
   let newCashflow;
 
-  if (!cashflow.vendor || !cashflow.customer)
+  if (cashflow.vendor === '' && cashflow.customer === '')
     return res.status(402).json({
       message: 'Vendor / Customer is required',
     });
 
   const user = await UsersModal.findOne({ _id: req.userId });
-  const oldCashflow = await Cashflow.findOne({ customer: cashflow.customer, type: 'Payable' });
+
+  if (cashflow.customer === '') {
+    delete cashflow.customer;
+  }
+
+  if (cashflow.vendor === '') {
+    delete cashflow.vendor;
+  }
+
+  if (cashflow.received === '') {
+    cashflow.received = 0;
+  }
+
+  const oldCashflow =
+    cashflow.customer !== ''
+      ? await Cashflow.findOne({
+          customer: cashflow.customer,
+          type: 'Payable',
+        })
+      : await Cashflow.findOne({
+          vendor: cashflow.vendor,
+          type: 'Payable',
+        });
 
   if (cashflow.type === 'Receivable' && oldCashflow) {
     const difference = cashflow.total - Math.abs(oldCashflow.remaining) - cashflow.received;
