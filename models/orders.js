@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 const ordersSchema = mongoose.Schema(
   {
     status: { type: String, required: true },
+    cashflow: { type: mongoose.Schema.Types.ObjectId, ref: 'Cashflow' },
     invoiceNo: { type: Number, required: true },
     store: {
       type: mongoose.Schema.Types.ObjectId,

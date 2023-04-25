@@ -30,7 +30,7 @@ export const getUsers = async (req, res) => {
     let usersModals;
     if (user?.role === 'superAdmin') {
       usersModals = await UserModal.find().populate('store');
-    } else if (user?.role === 'admin') {
+    } else {
       usersModals = await UserModal.find({ store: user.store }).populate('store');
     }
     res.status(200).json(usersModals);

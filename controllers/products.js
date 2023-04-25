@@ -101,6 +101,11 @@ export const createProduct = async (req, res) => {
   const product = req.body;
 
   const user = await UsersModal.findOne({ _id: req.userId });
+  const isProductExists = await ProductsModal.findOne({ name: product.name });
+
+  if (isProductExists) {
+    return res.status(400).send({ message: 'Product already exits' });
+  }
   const barCode = randomBarCode();
 
   const newProductsModal = new ProductsModal({
