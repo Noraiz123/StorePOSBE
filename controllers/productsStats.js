@@ -52,7 +52,17 @@ export const getProductsStats = async (req, res) => {
         .limit(perPage)
         .skip(startIndex);
     }
-    res.status(200).json({ stats: productsStats, currentPage: page, totalPages: Math.ceil(total / perPage) });
+
+    const updatedStats = productsStats.map((s) => ({
+      ...s._doc,
+      availableStockPrice: s.product.retailPrice * s.product.quantity,
+    }));
+
+    res.status(200).json({
+      stats: updatedStats,
+      currentPage: page,
+      totalPages: Math.ceil(total / perPage),
+    });
   } catch (error) {
     res.status(404).json({ message: error.message });
   }
