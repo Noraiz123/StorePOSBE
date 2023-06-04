@@ -90,7 +90,7 @@ export const getOrders = async (req, res) => {
     }
 
     if (user && user.role === 'superAdmin') {
-      total = await OrdersModal.countDocuments({}).where(filters);
+      total = await c.countDocuments({}).where(filters);
       ordersModals = await OrdersModal.find()
         .where(filters)
         .populate('cashier')
@@ -141,7 +141,6 @@ export const getOrders = async (req, res) => {
       if (filters?.createdAt) {
         expenseFilters.createdAt = filters.createdAt;
       }
-      expenseFilters.type = { $ne: 'accrued' };
       if (filters?.store) {
         expenseFilters.store = filters.store;
       }
