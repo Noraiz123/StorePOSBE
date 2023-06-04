@@ -13,8 +13,8 @@ export const GetProfitLossStatement = async (req, res) => {
 
     if (query.created_at_gteq !== '' && query.created_at_lteq !== '') {
         filters.createdAt = {
-            $gte: `${query.created_at_gteq}T00:00:00.000Z`,
-            $lt: `${query.created_at_lteq}T23:59:59.999Z`,
+            $gte: new Date(`${query.created_at_gteq}T00:00:00.000Z`),
+            $lt: new Date(`${query.created_at_lteq}T23:59:59.999Z`),
         };
     } else {
         const date = new Date();
@@ -55,7 +55,7 @@ export const GetProfitLossStatement = async (req, res) => {
             },
         ]);
 
-        console.log(totalSales , totalExpenses , totalRetailPrice)
+        console.log(totalSales , totalExpenses , totalRetailPrice , filters)
 
         const grossProfit = totalSales[0]?.total - totalRetailPrice[0]?.total || 0;
         const netProfit = grossProfit - totalExpenses[0]?.total || 0;
