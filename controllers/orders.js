@@ -271,14 +271,16 @@ export const updateOrder = async (req, res) => {
   let bulkOptions = order.orderItems.map((item) => {
     let quantity;
     if (item.delete) {
-      quantity = +item.quantity;
+      quantity = item?.variated ? +(item.quantity / item.bagQuantity) : +item.quantity;
     } else if (!item?.previousQuantity) {
-      quantity = -item.quantity;
+      quantity = item?.variated ? -(item.quantity / item.bagQuantity) : -item.quantity;
     } else {
+      const currentQuantity = item?.variated ? item.quantity / item.bagQuantity : item.quantity;
+      const previousQuantity = item?.variated ? item.previousQuantity / item.bagQuantity : item.previousQuantity;
       quantity =
         item.quantity > item.previousQuantity
-          ? -(item.quantity - item.previousQuantity)
-          : +(item.previousQuantity - item.quantity);
+          ? -(currentQuantity - previousQuantity)
+          : +(previousQuantity - currentQuantity);
     }
 
     return {
@@ -297,13 +299,15 @@ export const updateOrder = async (req, res) => {
     let quantity;
     let sold;
     let sales;
+    const previousQuantity = item.variated ? item.previousQuantity / item.bagQuantity : item.previousQuantity;
+    const currentQuantity = item.variated ? item.quantity / item.bagQuantity : item.quantity;
     if (item.delete) {
-      quantity = +item.previousQuantity;
-      sold = -item.previousQuantity;
+      quantity = +previousQuantity;
+      sold = -previousQuantity;
       sales = -item.previousPaid;
     } else if (!item?.previousQuantity) {
-      quantity = -item.quantity;
-      sold = +item.quantity;
+      quantity = -currentQuantity;
+      sold = +currentQuantity;
       sales = +item.paidPrice;
     } else {
       quantity =
@@ -312,8 +316,8 @@ export const updateOrder = async (req, res) => {
           : +(item.previousQuantity - item.quantity);
       sold =
         item.quantity > item.previousQuantity
-          ? +(item.quantity - item.previousQuantity)
-          : -(item.previousQuantity - item.quantity);
+          ? +(currentQuantity - previousQuantity)
+          : -(previousQuantity - currentQuantity);
 
       sales =
         item.paidPrice > item.previousPaid
